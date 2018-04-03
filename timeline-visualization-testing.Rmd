@@ -1,0 +1,85 @@
+---
+title: "timeline-visualization-testing"
+author: "Rick Gilmore"
+date: "`r Sys.time()`"
+output: 
+  github_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Purpose
+
+To create attractive visualizations of timelines of coded behaviors from PLAY project Datavyu spreadsheets.
+
+## Requirements
+
+- Show mom and infant time lines by behavioral domain/code
+
+## Generate sample data
+
+```{r generate-data}
+onset <- c(30, 45, 75, 80)
+offset <- c(32, 46, 78, 90)
+person <- c('infant', 'infant', 'mother', 'mother')
+# Grouping by bout.id allows line segments
+bout <- c(1, 2, 3, 4)
+
+sample.1 <- data.frame(bout, person, onset, offset)
+```
+
+## Sample plot
+
+```{r sample-plot}
+sample.1 %>%
+  gather(., key = event, value = time, onset, offset) %>%
+  ggplot() +
+  aes(x = time, y = person, group = bout) +
+  geom_line(aes(size = 2)) +
+  theme_classic() +
+  theme(legend.position = "none")
+```
+
+Ok, this looks promising. Let's add some additional variables, including some for different 'domains' of codes.
+
+## Sample data set 2
+
+```{r generate-dataset-2}
+onset.i <- sort(runif(n = 40, min = 1, max = 300))
+onset.m <- sort(runif(n = 40, min = 1, max = 300))
+offset.i <- onset.i + runif(n = 40, min = 1, max = 20)
+offset.m <- onset.m + runif(n = 40, min = 1, max = 20)
+onset <- c(onset.i, onset.m)
+offset <- c(offset.i, offset.m)
+person <- rep(c("infant", "mother"), each = 40)
+bout <- 1:length(onset)
+domain <- rep(c("lang", "loco", "obj", "emo"), 20)
+
+sample.2 <- data.frame(person, domain, bout, onset, offset)
+```
+
+Now, let's plot.
+
+```{r plot-sample-2}
+sample.2 %>%
+  gather(., key = event, value = time, onset, offset) %>%
+  ggplot() +
+  aes(x = time, y = domain, group = bout, fill = domain) +
+  geom_line(aes(size = 2, color = domain)) +
+  facet_grid(person ~ .) +
+  theme_classic() +
+  theme(legend.position = "bottom")
+  
+```
+
+So, data in the following format can be easily plotted as a time line:
+
+```{r print-data-table}
+sample.2 %>%
+  knitr::kable(.)
+```
+
