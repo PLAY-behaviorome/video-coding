@@ -1,7 +1,7 @@
 timeline-report
 ================
 Rick Gilmore
-2018-04-06 09:38:27
+2018-04-06 12:04:15
 
 Purpose
 -------
@@ -138,8 +138,8 @@ dv.combined %>%
   xlab("Minutes") +
   scale_shape_identity() +
   guides(size = FALSE) +
-  theme_classic() +
-  theme(legend.position = "bottom")
+  timeline.theme +
+  color.palette
 ```
 
 ![](img/NYU013/time-line-plot-00-60-1.png)
@@ -160,8 +160,8 @@ dv.combined %>%
   xlab("Minutes") +
   scale_shape_identity() +
   guides(size = FALSE) +
-  theme_classic() +
-  theme(legend.position = "bottom")
+  timeline.theme +
+  color.palette
 ```
 
 ![](img/NYU013/time-line-plot-00-10-1.png)
@@ -182,8 +182,8 @@ dv.combined %>%
   xlab("Minutes") +
   scale_shape_identity() +
   guides(size = FALSE) +
-  theme_classic() +
-  theme(legend.position = "bottom")
+  timeline.theme +
+  color.palette
 ```
 
 ![](img/NYU013/time-line-plot-10-20-1.png)
@@ -204,8 +204,8 @@ dv.combined %>%
   xlab("Minutes") +
   scale_shape_identity() +
   guides(size = FALSE) +
-  theme_classic() +
-  theme(legend.position = "bottom")
+  timeline.theme +
+  color.palette
 ```
 
 ![](img/NYU013/time-line-plot-20-30-1.png)
@@ -226,8 +226,8 @@ dv.combined %>%
   xlab("Minutes") +
   scale_shape_identity() +
   guides(size = FALSE) +
-  theme_classic() +
-  theme(legend.position = "bottom")
+  timeline.theme +
+  color.palette
 ```
 
 ![](img/NYU013/time-line-plot-30-40-1.png)
@@ -248,8 +248,8 @@ dv.combined %>%
   xlab("Minutes") +
   scale_shape_identity() +
   guides(size = FALSE) +
-  theme_classic() +
-  theme(legend.position = "bottom")
+  timeline.theme +
+  color.palette
 ```
 
 ![](img/NYU013/time-line-plot-40-50-1.png)
@@ -270,8 +270,8 @@ dv.combined %>%
   xlab("Minutes") +
   scale_shape_identity() +
   guides(size = FALSE) +
-  theme_classic() +
-  theme(legend.position = "bottom")
+  timeline.theme +
+  color.palette
 ```
 
 ![](img/NYU013/time-line-plot-50-60-1.png)
@@ -292,8 +292,8 @@ dv.combined %>%
   xlab("Minutes") +
   scale_shape_identity() +
   guides(size = FALSE) +
-  theme_classic() +
-  theme(legend.position = "bottom")
+  timeline.theme +
+  color.palette
 ```
 
 ![](img/NYU013/time-line-plot-60+-1.png)
