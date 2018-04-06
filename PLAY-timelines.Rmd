@@ -1,0 +1,81 @@
+---
+title: "PLAY-timelines"
+author: "Rick Gilmore"
+date: "`r Sys.time()`"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+This is a very simple slide deck that shows the timelines we can generate from Datavyu files.
+
+See <https://github.com/PLAY-behaviorome/video-coding> for more details.
+
+## All 'gold standard' subs across the hour
+
+<div class="centered">
+<img src="img/NYU013/time-line-plot-00-60-1.png" height=250px/>
+<img src="img/NYU018/time-line-plot-00-60-1.png" height=250px/>
+<img src="img/NYU019/time-line-plot-00-60-1.png" height=250px/>
+<img src="img/NYU020/time-line-plot-00-60-1.png" height=250px/>
+</div>
+
+## All 'gold standard' subs mins 0-10
+
+<div class="centered">
+<img src="img/NYU013/time-line-plot-00-10-1.png" height=250px/>
+<img src="img/NYU018/time-line-plot-00-10-1.png" height=250px/>
+<img src="img/NYU019/time-line-plot-00-10-1.png" height=250px/>
+<img src="img/NYU020/time-line-plot-00-10-1.png" height=250px/>
+</div>
+
+## All 'gold standard' subs mins 10-20
+
+<div class="centered">
+<img src="img/NYU013/time-line-plot-10-20-1.png" height=250px/>
+<img src="img/NYU018/time-line-plot-10-20-1.png" height=250px/>
+<img src="img/NYU019/time-line-plot-10-20-1.png" height=250px/>
+<img src="img/NYU020/time-line-plot-10-20-1.png" height=250px/>
+</div>
+
+## All 'gold standard' subs mins 20-30
+
+<div class="centered">
+<img src="img/NYU013/time-line-plot-20-30-1.png" height=250px/>
+<img src="img/NYU018/time-line-plot-20-30-1.png" height=250px/>
+<img src="img/NYU019/time-line-plot-20-30-1.png" height=250px/>
+<img src="img/NYU020/time-line-plot-20-30-1.png" height=250px/>
+</div>
+
+## All 'gold standard' subs mins 30-40
+
+<div class="centered">
+<img src="img/NYU013/time-line-plot-30-40-1.png" height=250px/>
+<img src="img/NYU018/time-line-plot-30-40-1.png" height=250px/>
+<img src="img/NYU019/time-line-plot-30-40-1.png" height=250px/>
+<img src="img/NYU020/time-line-plot-30-40-1.png" height=250px/>
+</div>
+
+## All 'gold standard' subs mins 40-50
+
+<div class="centered">
+<img src="img/NYU013/time-line-plot-40-50-1.png" height=250px/>
+<img src="img/NYU018/time-line-plot-40-50-1.png" height=250px/>
+<img src="img/NYU019/time-line-plot-40-50-1.png" height=250px/>
+<img src="img/NYU020/time-line-plot-40-50-1.png" height=250px/>
+</div>
+
+## All 'gold standard' subs mins 50-60
+
+<div class="centered">
+<img src="img/NYU013/time-line-plot-50-60-1.png" height=250px/>
+<img src="img/NYU018/time-line-plot-50-60-1.png" height=250px/>
+<img src="img/NYU019/time-line-plot-50-60-1.png" height=250px/>
+<img src="img/NYU020/time-line-plot-50-60-1.png" height=250px/>
+</div>
+
+
