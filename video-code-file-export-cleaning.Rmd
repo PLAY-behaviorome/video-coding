@@ -120,7 +120,10 @@ transcript %>%
 ```{r utterance-length}
 transcript %>%
   filter(voc.type == "word") %>%
-  mutate(utt.count = str_count(content)) %>%
+  mutate(utt.count = str_count(content)) -> 
+  transcript
+  
+transcript %>%
   ggplot() +
   aes(x=speaker, y=utt.count) +
   geom_boxplot() +
@@ -259,3 +262,15 @@ objects %>%
   xlab("Time from start (min)") +
   ylab("Object interaction duration (min)")
 ```
+
+### Plot bouts
+
+```{r plot-object-bouts}
+objects %>%
+  filter(momobject.onset < 60000) %>%
+  ggplot() +
+  aes(x = momobject.onset/60000, y = 1) +
+  geom_point() +
+  geom_errorbarh(aes(xmax=momobject.offset/60000, xmin=momobject.onset/60000))
+```
+

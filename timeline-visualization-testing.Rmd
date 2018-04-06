@@ -20,7 +20,9 @@ To create attractive visualizations of timelines of coded behaviors from PLAY pr
 
 - Show mom and infant time lines by behavioral domain/code
 
-## Generate sample data
+## Example 1
+
+### Generate sample data
 
 ```{r generate-data}
 onset <- c(30, 45, 75, 80)
@@ -32,7 +34,7 @@ bout <- c(1, 2, 3, 4)
 sample.1 <- data.frame(bout, person, onset, offset)
 ```
 
-## Sample plot
+### Sample plot
 
 ```{r sample-plot}
 sample.1 %>%
@@ -46,7 +48,9 @@ sample.1 %>%
 
 Ok, this looks promising. Let's add some additional variables, including some for different 'domains' of codes.
 
-## Sample data set 2
+## Example 2
+
+### Generate data
 
 ```{r generate-dataset-2}
 onset.i <- sort(runif(n = 40, min = 1, max = 300))
@@ -83,3 +87,202 @@ sample.2 %>%
   knitr::kable(.)
 ```
 
+## Example 3: Working with an actual exported Datavyu file
+
+There are sample Datavyu files from the 'gold standard' videos (minus the emotion coding) in `analysis/csv/`. Let's see if we can use a comparable workflow to visualize these data.
+
+```{r import-datavyu-csv}
+sub.id <- 'nyu_18'
+fn <- paste0("analysis/csv/", sub.id, ".csv")
+dv <- read.csv(fn, stringsAsFactors = FALSE)
+
+# Select subset of key variables, especially ordinals, onsets, & offsets
+dv %>%
+  select(babyloc.ordinal, babyloc.onset, babyloc.offset,
+         babyobject.ordinal, babyobject.onset, babyobject.offset,
+         babyvoc.ordinal, babyvoc.onset, babyvoc.offset,
+         momloc.ordinal, momloc.onset, momloc.offset,
+         momobject.ordinal, momobject.onset, momobject.offset,
+         momspeech.ordinal, momspeech.onset, momspeech.offset) ->
+  dv
+
+# Remove NAs and make ordinals unique within domains for later grouping
+dv %>%
+  filter(!is.na(babyloc.ordinal), !is.na(momloc.ordinal),
+         !is.na(babyobject.ordinal), !is.na(momobject.ordinal),
+         !is.na(babyvoc.ordinal), !is.na(momspeech.ordinal)) %>%
+  filter(!is.na(babyloc.onset), !is.na(momloc.onset),
+         !is.na(babyobject.onset), !is.na(momobject.onset),
+         !is.na(babyvoc.onset), !is.na(momspeech.onset)) %>%
+   filter(!is.na(babyloc.offset), !is.na(momloc.offset),
+         !is.na(babyobject.offset), !is.na(momobject.offset),
+         !is.na(babyvoc.offset), !is.na(momspeech.offset)) ->
+  dv
+
+dv %>%
+  mutate(., b.loc.bout = paste0('b.loc.', babyloc.ordinal)) %>%
+  mutate(., m.loc.bout = paste0('m.loc.', momloc.ordinal)) %>%
+  mutate(., b.obj.bout = paste0('b.obj.', babyobject.ordinal)) %>%
+  mutate(., m.obj.bout = paste0('m.obj.', momobject.ordinal)) %>%
+  mutate(., b.voc.bout = paste0('b.voc.', babyvoc.ordinal)) %>%
+  mutate(., m.voc.bout = paste0('m.voc.', momspeech.ordinal)) ->
+  dv1
+
+# Gather for onsets and offsets
+dv1 %>%
+  gather(key = bout.lbl, value = bout, b.loc.bout, m.loc.bout, b.obj.bout, m.obj.bout,
+         b.voc.bout, m.voc.bout) %>%
+  arrange(bout) ->
+  dv2
+  
+dv2 %>%
+  gather(key = event, value = time.ms, 
+         babyloc.onset, babyloc.offset, babyobject.onset, babyobject.offset,
+         babyvoc.onset, babyvoc.offset, momloc.onset, momloc.offset, 
+         momobject.onset, momobject.offset, momspeech.onset, momspeech.offset) %>%
+  mutate(event = str_extract(event, "[onsetf]+$")) %>%
+  mutate(person = substr(bout.lbl, 1, 1)) %>%
+  mutate(domain = substr(bout.lbl, 3, 5)) %>%
+  select(person, domain, bout, event, time.ms) ->
+  dv2
+```
+
+Okay, now that we've munged the data, let's plot.
+
+```{r plot-nyu-18}
+dv2 %>%
+  filter(time.ms < 1000*60*3) %>%
+  ggplot() +
+  aes(x = time.ms, y = domain, group = bout, fill = domain) +
+  geom_line(aes(size = 2, color = domain)) +
+  facet_grid(person ~ .) +
+  theme_classic() +
+  theme(legend.position = "bottom")
+```
+
+Looks like all the NA's got grouped. 
+
+The 'elegant' way isn't working, so let's try an approach that separates the different domains.
+
+```{r import-datavyu-segregate-by-domain}
+sub.id <- 'nyu_18'
+fn <- paste0("analysis/csv/", sub.id, ".csv")
+dv <- read.csv(fn, stringsAsFactors = FALSE)
+
+dv %>%
+  select(., babyloc.ordinal, babyloc.onset, babyloc.offset) %>%
+  gather(., key = event, value = time.ms, -babyloc.ordinal) %>%
+  mutate(., event = str_extract(event, "[onsetf]+$")) %>%
+  mutate(., ordinal = paste0('b.loc.', babyloc.ordinal)) %>%
+  mutate(., person = "infant") %>%
+  select(-babyloc.ordinal) %>%
+  arrange(., time.ms) ->
+  dv.babyloc
+
+dv %>%
+  select(., momloc.ordinal, momloc.onset, momloc.offset) %>%
+  gather(., key = event, value = time.ms, -momloc.ordinal) %>%
+  mutate(., event = str_extract(event, "[onsetf]+$")) %>%
+  mutate(., ordinal = paste0('m.loc.', momloc.ordinal)) %>%
+  mutate(., person = "mother") %>%
+  select(-momloc.ordinal) %>%
+  arrange(., time.ms) ->
+  dv.momloc
+
+dv.loc <- rbind(dv.babyloc, dv.momloc)
+dv.loc$domain = "locomotion"
+
+dv.loc %>%
+  filter(time.ms < 1000*60*3) %>%
+  ggplot() +
+  aes(x = time.ms, y = person, group = ordinal) +
+  geom_line(aes(size = 2))
+```
+
+```{r dfs-for-other-domains}
+dv %>%
+  select(., babyobject.ordinal, babyobject.onset, babyobject.offset) %>%
+  gather(., key = event, value = time.ms, -babyobject.ordinal) %>%
+  mutate(., event = str_extract(event, "[onsetf]+$")) %>%
+  mutate(., ordinal = paste0('b.obj.', babyobject.ordinal)) %>%
+  mutate(., person = "infant") %>%
+  select(-babyobject.ordinal) %>%
+  arrange(., time.ms) ->
+  dv.babyobj
+
+dv %>%
+  select(., momobject.ordinal, momobject.onset, momobject.offset) %>%
+  gather(., key = event, value = time.ms, -momobject.ordinal) %>%
+  mutate(., event = str_extract(event, "[onsetf]+$")) %>%
+  mutate(., ordinal = paste0('m.obj.', momobject.ordinal)) %>%
+  mutate(., person = "mother") %>%
+  select(-momobject.ordinal) %>%
+  arrange(., time.ms) ->
+  dv.momobj
+
+dv.obj <- rbind(dv.babyobj, dv.momobj)
+dv.obj$domain = "objects"
+
+dv %>%
+  select(., babyvoc.ordinal, babyvoc.onset, babyvoc.offset) %>%
+  gather(., key = event, value = time.ms, -babyvoc.ordinal) %>%
+  mutate(., event = str_extract(event, "[onsetf]+$")) %>%
+  mutate(., ordinal = paste0('b.voc.', babyvoc.ordinal)) %>%
+  mutate(., person = "infant") %>%
+  select(-babyvoc.ordinal) %>%
+  arrange(., time.ms) ->
+  dv.babyvoc
+
+dv %>%
+  select(., momspeech.ordinal, momspeech.onset, momspeech.offset) %>%
+  gather(., key = event, value = time.ms, -momspeech.ordinal) %>%
+  mutate(., event = str_extract(event, "[onsetf]+$")) %>%
+  mutate(., ordinal = paste0('m.voc.', momspeech.ordinal)) %>%
+  mutate(., person = "mother") %>%
+  select(-momspeech.ordinal) %>%
+  arrange(., time.ms) ->
+  dv.momspeech
+
+dv.voc <- rbind(dv.babyvoc, dv.momspeech)
+dv.voc$domain = "speech"
+```
+
+Let's plot the separate domains.
+
+```{r plot-obj-speech}
+dv.obj %>%
+  filter(time.ms < 1000*60*5) %>%
+  ggplot() +
+  aes(x = time.ms, y = person, group = ordinal) +
+  geom_line(aes(size = 2))
+
+dv.voc %>%
+  filter(time.ms < 1000*60*3) %>%
+  ggplot() +
+  aes(x = time.ms, y = person, group = ordinal) +
+  geom_point() +
+  geom_line(aes(size = 2))
+```
+
+Infant and mother vocalization and speech events have offset == onset!
+
+Putting it all together.
+
+```{r}
+dv.nyu18 <- rbind(dv.loc, dv.obj, dv.voc)
+dv.nyu18 %>%
+  arrange(time.ms) ->
+  dv.nyu18
+
+dv.nyu18 %>%
+  filter(time.ms > 1000*60*30, time.ms < 1000*60*32) %>%
+  ggplot() +
+  aes(x = (time.ms)/(60*1000), y = person, group = ordinal, color = domain) +
+  geom_point() +
+  geom_line(aes(size = 1)) +
+  facet_grid(domain ~ .) +
+  xlab("Minutes") +
+  theme_classic()
+```
+
+Ok, so this is a start. I'd still like to find a more `tidyverse` compatible way to do the munging. But sometimes a hack is the best way to start.
