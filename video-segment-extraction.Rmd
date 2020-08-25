@@ -1,0 +1,135 @@
+---
+title: "Video segment extraction"
+author: "Rick Gilmore"
+date: "`r Sys.time()`"
+output: 
+  html_document:
+      code_folding: show
+      toc: true
+      toc_float: true
+params:
+  db_login_id: "email@provider.com"
+---
+
+# Purpose
+
+This notebook documents Rick Gilmore's explorations of ways to extract video segments from coded PLAY Project Datavyu files.
+
+# Set-up
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Packages
+library(tidyverse)
+```
+
+# Goals
+
+1. Select a coding pass for a PLAY participant.
+1. Open the Datavyu file.
+1. Extract the segments for a particular code value.
+1. Convert the segments into URLs.
+1. Select some of the segments and return the videos from Databrary.
+
+# Technical strategy
+
+## Available `.opf` files
+
+Login to Databrary.
+
+```{r}
+databraryapi::login_db(params$db_login_id)
+```
+
+The PLAY pilot directory is volume 444. 
+List the sessions in this volume
+
+```{r}
+play_vol <- 444
+(play_pilot_sessions <- databraryapi::list_sessions(play_vol))
+```
+
+Filter out Materials folders.
+The `top` variable is TRUE for Materials folders.
+
+```{r}
+play_pilot_sessions <- play_pilot_sessions %>%
+  dplyr::filter(., is.na(top))
+play_pilot_sessions
+```
+
+There are `r dim(play_pilot_sessions)[1]` pilot sessions.
+I had planned to look at each individually, but I am not sure that any of these have `.opf` files.
+So, for now I'm going to ask the staff where the files might be.
+
+In the meantime, I have the file for NYU-018 locally.
+I have uploaded it to Databrary.
+
+I need to identify the session ID for participant 18.
+
+```{r}
+play_pilot_018 <- play_pilot_sessions %>%
+  dplyr::filter(., stringr::str_detect(name, "018"))
+play_pilot_018
+```
+
+Then list the assets in the session.
+
+```{r}
+play_pilot_018_assets <- databraryapi::list_assets_in_session(play_pilot_018$session_id)
+```
+
+Note that the Datavyu file has mimetype `application/vnd.datavyu` and extention `opf`.
+
+## Download and clean `opf`
+
+Create the download directory if needed.
+
+```{r}
+dv_dir = 'opf'
+if (!dir.exists(dv_dir)) {
+  dir.create(dv_dir)
+}
+```
+
+Then download the file.
+
+```{r}
+play_018_dv <- play_pilot_018_assets %>%
+  dplyr::filter(., mimetype == 'application/vnd.datavyu')
+```
+
+
+```{r}
+databraryapi::download_datavyu(session_id = play_pilot_018$session_id, asset_id = play_018_dv$asset_id, out_dir = dv_dir)
+```
+
+Now, let's convert the Datavyu file to a CSV.
+
+```{r}
+databraryapi::extract_dv(in_dir = dv_dir)
+databraryapi::dv_to_csv(dv_dir)
+```
+
+### Logout
+
+```{r}
+databraryapi::logout_db()
+```
+
+## Shiny app
+
+The following is merely a template app.
+I have set `eval=FALSE` for now.
+
+```{r, echo=FALSE, eval=FALSE}
+shiny_dir <- "shiny/"
+shiny_app <- "databrary"
+shinyAppDir(appDir = paste(shiny_dir, shiny_app, sep=""),
+  options=list(
+    width="100%", height=700
+  )
+)
+```
+
