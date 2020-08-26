@@ -82,7 +82,7 @@ play_pilot_018_assets <- databraryapi::list_assets_in_session(play_pilot_018$ses
 
 Note that the Datavyu file has mimetype `application/vnd.datavyu` and extention `opf`.
 
-## Download and clean `opf`
+## Download, clean `opf`
 
 Create the download directory if needed.
 
@@ -101,16 +101,145 @@ play_018_dv <- play_pilot_018_assets %>%
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 databraryapi::download_datavyu(session_id = play_pilot_018$session_id, asset_id = play_018_dv$asset_id, out_dir = dv_dir)
 ```
 
 Now, let's convert the Datavyu file to a CSV.
 
-```{r}
+```{r, eval=FALSE}
 databraryapi::extract_dv(in_dir = dv_dir)
 databraryapi::dv_to_csv(dv_dir)
 ```
+
+That seems to work.
+
+## Examine codes
+
+Let's examine the various code types available.
+First, we import the CSV as a data frame.
+
+```{r}
+dv_fn <- list.files(path = dv_dir, pattern = "\\.csv$", full.names = TRUE)
+# Need to read times as character 'c' to then convert fractions of a second properly.
+p_018 <- readr::read_csv(dv_fn, col_types = 'cccc')  
+unique(p_018$code)
+```
+
+## Focus on `momspeech`
+
+Let's focus on the `momspeech` code for now.
+
+```{r}
+momtalk <- p_018 %>%
+  dplyr::filter(., code == 'momspeech')
+momtalk
+```
+
+Let's convert these onsets and offsets into URIs that point to the video on Databrary.
+
+The format of a video URI is as follows:
+
+`https://nyu.databrary.org/slot/<SLOT_ID>/<SEG_START_MS>,<SEG_END_MS>/asset/<ASSET_ID>/download?inline=true`
+
+We'll have to decide the default duration for the speech events since these are point cell events.
+Also, I wonder if we should have a cushion at the start.
+
+### Determine video
+
+```{r}
+play_pilot_018_assets
+```
+
+Because the videos have an idioysyncractic naming convention, I have to choose the correct one manually.
+Here it is `S#18_1-Hour.mov`.
+
+```{r}
+p_018_video_asset <- play_pilot_018_assets %>%
+  dplyr::filter(., name == 'S#18_1-Hour.mov')
+video_asset_id <- p_018_video_asset$asset_id
+```
+
+
+```{r}
+# Databrary 
+segment_range <- databraryapi::get_asset_segment_range(vol_id = play_vol, session_id = play_pilot_018$session_id, asset_id = play_018_dv$asset_id)
+
+# helper function
+HHMMSSmmm_to_ms <- function(HHMMSSmmm = "01:01:01.333") 
+{
+    if (!is.character(HHMMSSmmm)) {
+        stop("HHMMSSmmm must be a string.")
+    }
+    if (stringr::str_detect(HHMMSSmmm, "([0-9]{2}):([0-9]{2}):([0-9]{2})\\.([0-9]{3})")) {
+        time_segs <- stringr::str_match(HHMMSSmmm, "([0-9]{2}):([0-9]{2}):([0-9]{2})\\.([0-9]{3})")
+        as.numeric(time_segs[5]) + as.numeric(time_segs[4]) * 
+            1000 + as.numeric(time_segs[3]) * 1000 * 60 + as.numeric(time_segs[2]) * 
+            1000 * 60 * 60
+    }
+    else {
+        NULL
+    }
+}
+
+code_to_URI <- function(code_row, slot_id, asset_id, pre_offset_ms = -500, post_offset_ms = 1500) {
+  # code_row is a code from a Datavyu data.frame/tibble
+  # TODO: Add parameter checks
+  
+  # Process onsets & offsets
+  onset_ms <- HHMMSSmmm_to_ms(as.character(code_row$onset)) + pre_offset_ms
+  offset_ms <- HHMMSSmmm_to_ms(as.character(code_row$offset)) + post_offset_ms
+  selected_seg <- paste0(onset_ms, ",", offset_ms)
+  
+  # Create URI
+  paste0('https://nyu.databrary.org/slot/', slot_id, '/', selected_seg, 
+         '/asset/', asset_id, '/download?inline=true')
+}
+```
+
+Shall we try this with a few segments?
+
+```{r}
+code_to_URI(momtalk[10,], slot_id = play_pilot_018$session_id, asset_id = video_asset_id)
+code_to_URI(momtalk[24,], slot_id = play_pilot_018$session_id, asset_id = video_asset_id)
+code_to_URI(momtalk[34,], slot_id = play_pilot_018$session_id, asset_id = video_asset_id)
+code_to_URI(momtalk[740,], slot_id = play_pilot_018$session_id, asset_id = video_asset_id)
+```
+
+That seems to work.
+Let's modify the `code_to_URI()` function to make it `lapply()` or `purr()` compatible.
+
+```{r}
+code_to_URI_2 <- function(i, df, slot_id, asset_id, pre_offset_ms = -500, post_offset_ms = 1500) {
+  # code_row is a code from a Datavyu data.frame/tibble
+  # TODO: Add parameter checks
+  code_row <- df[i,]
+  
+  # Process onsets & offsets
+  onset_ms <- HHMMSSmmm_to_ms(as.character(code_row$onset)) + pre_offset_ms
+  offset_ms <- HHMMSSmmm_to_ms(as.character(code_row$offset)) + post_offset_ms
+  selected_seg <- paste0(onset_ms, ",", offset_ms)
+  
+  # Create URI
+  paste0('https://nyu.databrary.org/slot/', slot_id, '/', selected_seg, 
+         '/asset/', asset_id, '/download?inline=true')
+}
+```
+
+```{r}
+uri_list <- lapply(1:dim(momtalk)[1], code_to_URI_2, df = momtalk, slot_id = play_pilot_018$session_id, asset_id = video_asset_id)
+```
+
+```{r}
+momtalk_w_uris <- momtalk %>%
+  dplyr::mutate(., uri = unlist(uri_list))
+
+momtalk_w_uris %>%
+  dplyr::select(., code.value, uri) %>%
+  knitr::kable(.)
+```
+
+Ok, so this works.
 
 ### Logout
 
