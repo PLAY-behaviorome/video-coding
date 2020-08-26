@@ -12,4 +12,4 @@ This repository contains code to visualize Datavyu timelines from the PLAY proje
 
 ## Video segment extraction
 
-- [This file](video-segment-extraction.html) shows how to extract relevant segments from a PLAY project video that has already been coded.
+- [This file](https://PLAY-behaviorome.github.io/video-coding/video-segment-extraction.html) shows how to extract relevant segments from a PLAY project video that has already been coded.
