@@ -230,6 +230,8 @@ code_to_URI_2 <- function(i, df, slot_id, asset_id, pre_offset_ms = -500, post_o
 uri_list <- lapply(1:dim(momtalk)[1], code_to_URI_2, df = momtalk, slot_id = play_pilot_018$session_id, asset_id = video_asset_id)
 ```
 
+### PLAY_018 mom utterances with links
+
 ```{r}
 momtalk_w_uris <- momtalk %>%
   dplyr::mutate(., uri = unlist(uri_list))
